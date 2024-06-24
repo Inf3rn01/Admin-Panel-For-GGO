@@ -79,7 +79,7 @@ class BannersScreen extends StatelessWidget {
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: DataTable(
-            columnSpacing: 795,
+            columnSpacing: 815,
             columns: const [
               DataColumn(label: Text('Изображение')),
               DataColumn(label: Text('Статус')),

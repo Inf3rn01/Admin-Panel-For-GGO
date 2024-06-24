@@ -39,16 +39,40 @@ class ProductRepository extends GetxController {
     }
   }
 
-  Future<void> addProduct(ProductModel product) async {
-    await _db.collection('Products').add(product.toJson());
+  Future<void> createProduct(ProductModel product) async {
+    try {
+      await _db.collection('Products').add(product.toJson());
+    } on FirebaseException catch (e) {
+      throw GFirebaseException(e.code).message;
+    } on PlatformException catch (e) {
+      throw GPlatformException(e.code).message;
+    } catch (e) {
+      throw 'Что-то пошло не так. Пожалуйста, попробуйте еще раз. $e';
+    }
   }
 
-  Future<void> updateProduct(ProductModel product) async {
-    await _db.collection('Products').doc(product.id).update(product.toJson());
+  Future<void> updateProduct(String productId, ProductModel product) async {
+    try {
+      await _db.collection('Products').doc(productId).update(product.toJson());
+    } on FirebaseException catch (e) {
+      throw GFirebaseException(e.code).message;
+    } on PlatformException catch (e) {
+      throw GPlatformException(e.code).message;
+    } catch (e) {
+      throw 'Что-то пошло не так. Пожалуйста, попробуйте еще раз. $e';
+    }
   }
 
   Future<void> deleteProduct(String productId) async {
-    await _db.collection('Products').doc(productId).delete();
+    try {
+      await _db.collection('Products').doc(productId).delete();
+    } on FirebaseException catch (e) {
+      throw GFirebaseException(e.code).message;
+    } on PlatformException catch (e) {
+      throw GPlatformException(e.code).message;
+    } catch (e) {
+      throw 'Что-то пошло не так. Пожалуйста, попробуйте еще раз. $e';
+    }
   }
 
 }

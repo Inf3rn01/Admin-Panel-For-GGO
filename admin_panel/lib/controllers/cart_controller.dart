@@ -102,7 +102,7 @@ class CartController extends GetxController {
 
   Future<void> fetchAllCartItems() async {
     try {
-      await productController.fetchFeaturedProducts(); // Загрузка избранных продуктов
+      productController.fetchFeaturedProducts(); // Загрузка избранных продуктов
       final QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('Cart').get();
       final List<CartModel> carts = querySnapshot.docs.map((doc) {
         return CartModel.fromJson(doc.data() as Map<String, dynamic>);

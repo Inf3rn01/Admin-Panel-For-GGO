@@ -8,6 +8,8 @@ import 'package:admin_panel/utils/theme/custom_themes/outlined_button_theme.dart
 import 'package:admin_panel/utils/theme/custom_themes/text_field_theme.dart';
 import 'package:admin_panel/utils/theme/custom_themes/text_theme.dart';
 
+import '../constants/colors.dart';
+
 
 class AppTheme {
   AppTheme._();
@@ -16,7 +18,7 @@ class AppTheme {
     useMaterial3: true,
     fontFamily: 'Manrope',
     brightness: Brightness.light,
-    primaryColor: Colors.blue,
+    primaryColor: GColors.primary,
     textTheme: GTextTheme.lightTextTheme,
     chipTheme: GChipTheme.lightChipTheme,
     scaffoldBackgroundColor: Colors.white,
@@ -32,7 +34,7 @@ class AppTheme {
     useMaterial3: true,
     fontFamily: 'Manrope',
     brightness: Brightness.dark,
-    primaryColor: Colors.blue,
+    primaryColor: GColors.primary,
     textTheme: GTextTheme.darkTextTheme,
     chipTheme: GChipTheme.darkChipTheme,
     scaffoldBackgroundColor: const Color(0xFF101010),

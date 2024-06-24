@@ -4,126 +4,107 @@ import 'package:admin_panel/controllers/product_controller.dart';
 import 'package:admin_panel/controllers/category_controller.dart';
 import 'package:admin_panel/models/product_models.dart';
 import 'package:admin_panel/models/category_models.dart';
+import '../data/repositories/products/product_repository.dart';
 import '../models/product_features_model.dart';
 
 class ProductScreen extends StatelessWidget {
   final ProductController _productController = Get.put(ProductController());
   final CategoryController _categoryController = Get.put(CategoryController());
+  final ProductRepository _productRepository = Get.put(ProductRepository()); 
 
   ProductScreen({super.key});
 
-  void _showAddEditDialog(BuildContext context, [ProductModel? product]) {
-  final TextEditingController titleController = TextEditingController(text: product?.title ?? '');
-  final TextEditingController priceController = TextEditingController(text: product?.price.toString() ?? '');
-  final TextEditingController descriptionController = TextEditingController(text: product?.description ?? '');
-  final TextEditingController imagesController = TextEditingController(text: product?.images?.join(',') ?? '');
-  final Map<String, dynamic> initialFeatures = product?.productFeatures?.features ?? {};
-  final List<MapEntry<String, dynamic>> featuresEntries = initialFeatures.entries.toList();
-  CategoryModel? selectedCategory = product?.categoryId != null ? _categoryController.allCategories.firstWhere((cat) => cat.id == product?.categoryId) : null;
-  bool isFeatured = product?.isFeatured ?? false; // Добавляем переменную для чекбокса
+void _showAddEditDialog(BuildContext context, [ProductModel? product]) {
+    final isEditing = product != null;
+    final TextEditingController titleController = TextEditingController(text: product?.title ?? '');
+    final TextEditingController priceController = TextEditingController(text: product?.price.toString() ?? '');
+    final TextEditingController descriptionController = TextEditingController(text: product?.description ?? '');
+    final TextEditingController imageUrlController = TextEditingController(text: product?.images?.join('\n') ?? '');
+    final List<MapEntry<TextEditingController, TextEditingController>> featureControllers = [];
 
-  showDialog(
-    context: context,
-    builder: (context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: Text(product == null ? 'Добавить продукт' : 'Изменить продукт'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButtonFormField<CategoryModel>(
-                    value: selectedCategory,
-                    decoration: const InputDecoration(labelText: 'Категория'),
-                    items: _categoryController.allCategories.map((CategoryModel category) {
-                      return DropdownMenuItem<CategoryModel>(
-                        value: category,
-                        child: Text(category.name),
-                      );
-                    }).toList(),
-                    onChanged: (CategoryModel? newValue) {
-                      setState(() {
-                        selectedCategory = newValue;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: imagesController,
-                    decoration: const InputDecoration(labelText: 'Фотографии (через запятую)'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: titleController,
-                    decoration: const InputDecoration(labelText: 'Название'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: priceController,
-                    decoration: const InputDecoration(labelText: 'Цена'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: descriptionController,
-                    decoration: const InputDecoration(labelText: 'Описание'),
-                  ),
-                  const SizedBox(height: 10),
-                  FeaturesEditor(initialFeatures: featuresEntries),
-                  const SizedBox(height: 10),
-                  CheckboxListTile(
-                    title: const Text('Активен'),
-                    value: isFeatured,
-                    onChanged: (bool? newValue) {
-                      setState(() {
-                        isFeatured = newValue ?? false;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Отмена'),
-              ),
-              TextButton(
-                onPressed: () {
-                  final Map<String, dynamic> featuresMap = featuresEntries.fold({}, (map, entry) {
-                    map[entry.key] = entry.value;
-                    return map;
-                  });
-                  final newProduct = ProductModel(
-                    id: product?.id ?? '',
-                    title: titleController.text,
-                    price: double.parse(priceController.text),
-                    description: descriptionController.text,
-                    images: imagesController.text.split(','),
-                    categoryId: selectedCategory?.id,
-                    productFeatures: ProductFeaturesModel(features: featuresMap),
-                    isFeatured: isFeatured, // Добавляем значение чекбокса
+    if (product?.productFeatures != null) {
+      product!.productFeatures!.features.forEach((key, value) {
+        featureControllers.add(MapEntry(TextEditingController(text: key), TextEditingController(text: value.toString())));
+      });
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(isEditing ? 'Редактировать продукт' : 'Добавить продукт'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: imageUrlController, decoration: const InputDecoration(labelText: 'URL фотографии'), maxLines: null),
+                TextField(controller: titleController, decoration: const InputDecoration(labelText: 'Название')),
+                TextField(controller: priceController, decoration: const InputDecoration(labelText: 'Цена'), keyboardType: TextInputType.number),
+                TextField(controller: descriptionController, decoration: const InputDecoration(labelText: 'Описание')),
+                ...featureControllers.map((entry) {
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: entry.key,
+                          decoration: const InputDecoration(labelText: 'Название поля'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: entry.value,
+                          decoration: const InputDecoration(labelText: 'Значение поля'),
+                        ),
+                      ),
+                    ],
                   );
-                  if (product == null) {
-                    _productController.addProduct(newProduct);
-                  } else {
-                    _productController.updateProduct(newProduct);
+                }),
+                TextButton(
+                  onPressed: () {
+                    featureControllers.add(MapEntry(TextEditingController(), TextEditingController()));
+                  },
+                  child: const Text('Добавить новое поле'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Отмена')),
+            TextButton(
+              onPressed: () async {
+                final Map<String, dynamic> features = {};
+                for (var entry in featureControllers) {
+                  if (entry.key.text.isNotEmpty && entry.value.text.isNotEmpty) {
+                    features[entry.key.text] = entry.value.text;
                   }
-                  Navigator.of(context).pop();
-                },
-                child: Text(product == null ? 'Добавить' : 'Обновить'),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
+                }
 
+                final newProduct = ProductModel(
+                  id: product?.id ?? '',
+                  title: titleController.text,
+                  price: double.parse(priceController.text),
+                  description: descriptionController.text,
+                  categoryId: product?.categoryId ?? '',
+                  isFeatured: product?.isFeatured ?? false,
+                  images: imageUrlController.text.split('\n').where((url) => url.isNotEmpty).toList(),
+                  productFeatures: ProductFeaturesModel(features: features),
+                );
+                if (isEditing) {
+                  await _productRepository.updateProduct(newProduct.id, newProduct);
+                } else {
+                  await _productRepository.createProduct(newProduct);
+                }
+                Navigator.of(context).pop();
+                _productController.fetchFeaturedProducts();
+              },
+              child: const Text('Сохранить'),
+            ),
+          ],
+        );
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -156,21 +137,34 @@ class ProductScreen extends StatelessWidget {
                     );
                     return DataRow(
                       cells: [
-                        DataCell(Container(
-                          width: 150,
-                          child: product.images != null && product.images!.isNotEmpty
+                        DataCell(
+                          product.images != null && product.images!.isNotEmpty
                               ? Wrap(
                                   spacing: 8.0,
                                   runSpacing: 8.0,
-                                  children: product.images!.map((url) => Image.network(url, width: 50, height: 50)).toList(),
+                                  children: product.images!.map((url) {
+                                    return Image.network(
+                                      url,
+                                      width: 50,
+                                      height: 50,
+                                      fit: BoxFit.cover,
+                                      loadingBuilder: (context, child, loadingProgress) {
+                                        if (loadingProgress == null) return child;
+                                        return const CircularProgressIndicator();
+                                      },
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return const Icon(Icons.error);
+                                      },
+                                    );
+                                  }).toList(),
                                 )
                               : const Text('Нет фото'),
-                        )),
+                        ),
                         DataCell(Text(product.title)),
                         DataCell(Text(category.name)),
                         DataCell(Text(product.price.toString())),
                         DataCell(Container(
-                          width: 150,
+                          width: 445,
                           child: Text(
                             product.description ?? '',
                             maxLines: 10,
@@ -178,7 +172,7 @@ class ProductScreen extends StatelessWidget {
                           ),
                         )),
                         DataCell(Container(
-                          width: 150,
+                          width: 445,
                           child: RichText(
                             text: TextSpan(
                               text: product.productFeatures?.features.entries.map((e) => '${e.key}: ${e.value}').join(', ') ?? '',

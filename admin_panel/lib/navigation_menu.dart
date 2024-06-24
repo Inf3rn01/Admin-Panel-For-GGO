@@ -22,7 +22,7 @@ class NavigationMenu extends StatelessWidget {
         leading: Builder(
           builder: (context) {
             return IconButton(
-              icon: const Icon(Icons.menu, color: GColors.softGrey),
+              icon: const Icon(Icons.menu, color: GColors.dark),
               onPressed: () {
                 Scaffold.of(context).openDrawer();
               },

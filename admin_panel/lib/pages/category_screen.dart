@@ -89,7 +89,7 @@ class CategoryScreen extends StatelessWidget {
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: DataTable(
-            columnSpacing: 460,
+            columnSpacing: 490,
             columns: const [
               DataColumn(label: Text('Изображение')),
               DataColumn(label: Text('Название')),
