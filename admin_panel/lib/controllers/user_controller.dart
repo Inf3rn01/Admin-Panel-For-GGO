@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
+
 import 'package:get/get.dart';
 import 'package:admin_panel/data/repositories/authentication/authentication_repository.dart';
 import 'package:admin_panel/data/repositories/user/user_repository.dart';
@@ -27,7 +27,7 @@ class UserController extends GetxController {
   final verifyPassword = TextEditingController();
   final userRepository = Get.put(UserRepository());
   GlobalKey<FormState> reAuthFormKey = GlobalKey<FormState>();
-  CardFieldInputDetails? cardFieldInputDetails;
+
 
   @override
   void onInit() {
@@ -68,81 +68,6 @@ class UserController extends GetxController {
     } catch (e) {
       Loaders.warningSnackBar(title: 'Данные не были сохранены', message: 'Что-то пошло не так при сохранении вашей информации. Вы можете повторно сохранить данные в своем профиле.');
     }
-  }
-
-  /// Инициализация кошелька
-  Future<Map<String, dynamic>> createPaymentIntent(double amount) async {
-    const url = 'https://api.stripe.com/v1/payment_intents';
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        'Authorization':
-            'Bearer sk_test_51PPSpoRrGht9QPvptAB8WmXBKBMQu1GsK5e3adG2J7CH046rtwXl5xTsX5EixzdiXkxUWIGAAhIQwSD42X8jdHg300QiCOTqBJ', // Замените на ваш секретный ключ
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: {
-        'amount': (amount * 100).toInt().toString(),
-        'currency': 'usd',
-        'payment_method_types[]': 'card',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Failed to create PaymentIntent: ${response.body}');
-    }
-  }
-
-  Future<void> confirmPayment(
-      Map<String, dynamic> paymentIntent, double amount) async {
-    try {
-      await Stripe.instance.confirmPayment(
-        paymentIntentClientSecret: paymentIntent['client_secret'],
-        data: PaymentMethodParams.card(
-          paymentMethodData: PaymentMethodData(
-            billingDetails: BillingDetails(
-              email: user.value.email,
-            ),
-          ),
-        ),
-      );
-
-      await updateBalance(amount);
-      Get.snackbar('Успех!', 'Баланс пополнен успешно на \$${amount.toStringAsFixed(2)}');
-    } catch (e) {
-      Get.snackbar('Ошибка!', 'Ошибка пополнения: $e');
-    }
-  }
-
-  Future<void> updateBalance(double amount) async {
-    final currentBalance = double.tryParse(user.value.balance) ?? 0.0;
-    final newBalance = currentBalance + amount;
-
-    user.update((user) {
-      if (user != null) {
-        user.balance = newBalance.toString();
-      }
-    });
-
-    await userRepository.updateUserDetails(user.value);
-  }
-
-  Future<void> topUpBalance(double amount) async {
-    if (amount > 0 && cardFieldInputDetails?.complete == true) {
-      try {
-        final paymentIntent = await createPaymentIntent(amount);
-        await confirmPayment(paymentIntent, amount);
-      } catch (e) {
-        Get.snackbar('Ошибка', 'Ошибка пополнения: $e');
-      }
-    } else {
-      Get.snackbar('Ошибка', 'Пожалуйста, введите корректные данные карты.');
-    }
-  }
-
-  void setCardFieldInputDetails(CardFieldInputDetails details) {
-    cardFieldInputDetails = details;
   }
 
   Future<void> logout() async {

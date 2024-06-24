@@ -31,11 +31,11 @@ class LoginController extends GetxController {
  /// SignIn
   void signIn() async {
     try {
-      FullScreenLoader.openLoadingDialog('Вход в систему...', GImages.loading);
+      //FullScreenLoader.openLoadingDialog('Вход в систему...', GImages.loading);
 
       final isConnected = await NetworkManager.instance.isConnected();
       if (!isConnected) {
-        FullScreenLoader.stopLoading();
+        //FullScreenLoader.stopLoading();
         Loaders.errorSnackBar(
             title: 'Нет интернета', 
             message: 'Пожалуйста, проверьте подключение к Интернету и повторите попытку'
@@ -44,7 +44,7 @@ class LoginController extends GetxController {
       }
 
       if (loginFormKey.currentState != null && !loginFormKey.currentState!.validate()) {
-        FullScreenLoader.stopLoading();
+        //FullScreenLoader.stopLoading();
         return;
       }
 
@@ -60,12 +60,21 @@ class LoginController extends GetxController {
           email.text.trim(), password.text.trim()
       );
 
+      if (userCredential.user != null && !userCredential.user!.emailVerified) {
+        //FullScreenLoader.stopLoading();
+        Loaders.warningSnackBar(
+          title: 'Email не подтвержден',
+          message: 'Пожалуйста, подтвердите ваш email для продолжения'
+        );
+        return;
+      }
+
       AuthenticationRepository.instance.screenRedirect();
       
-      FullScreenLoader.stopLoading();
+      //FullScreenLoader.stopLoading();
 
     } catch (e) {
-      FullScreenLoader.stopLoading();
+      //FullScreenLoader.stopLoading();
       Loaders.errorSnackBar(title: 'Ошибка!', message: 'Не верный логин или пароль');
     }
   }

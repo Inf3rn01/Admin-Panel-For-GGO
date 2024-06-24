@@ -138,41 +138,52 @@ class ProductScreen extends StatelessWidget {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
-                  columnSpacing: 20,
-                  horizontalMargin: 10,
-                  dataRowHeight: 50,
+                  dataRowMaxHeight: double.infinity,
                   columns: const [
+                    DataColumn(label: Center(child: Text('Фото'))),
                     DataColumn(label: Center(child: Text('Название'))),
+                    DataColumn(label: Center(child: Text('Категория'))),
                     DataColumn(label: Center(child: Text('Цена'))),
                     DataColumn(label: Center(child: Text('Описание'))),
-                    DataColumn(label: Center(child: Text('Категория'))),
                     DataColumn(label: Center(child: Text('Особенности'))),
                     DataColumn(label: Center(child: Text('Действия'))),
                     DataColumn(label: Center(child: Text('Активен'))),
                   ],
                   rows: _productController.allProducts.map((product) {
-                    final category = _categoryController.allCategories.firstWhere((cat) => cat.id == product.categoryId, orElse: () => CategoryModel(id: '', name: '', image: '', isFeatured: false));
+                    final category = _categoryController.allCategories.firstWhere(
+                      (cat) => cat.id == product.categoryId,
+                      orElse: () => CategoryModel(id: '', name: '', image: '', isFeatured: false),
+                    );
                     return DataRow(
                       cells: [
+                        DataCell(Container(
+                          width: 150,
+                          child: product.images != null && product.images!.isNotEmpty
+                              ? Wrap(
+                                  spacing: 8.0,
+                                  runSpacing: 8.0,
+                                  children: product.images!.map((url) => Image.network(url, width: 50, height: 50)).toList(),
+                                )
+                              : const Text('Нет фото'),
+                        )),
                         DataCell(Text(product.title)),
+                        DataCell(Text(category.name)),
                         DataCell(Text(product.price.toString())),
-                        DataCell(Flexible(
+                        DataCell(Container(
+                          width: 150,
                           child: Text(
                             product.description ?? '',
-                            style: const TextStyle(fontSize: 15),
-                            maxLines: 3,
+                            maxLines: 10,
                             overflow: TextOverflow.ellipsis,
                           ),
                         )),
-                        DataCell(Text(category.name)),
-                        DataCell(Flexible(
+                        DataCell(Container(
+                          width: 150,
                           child: RichText(
                             text: TextSpan(
                               text: product.productFeatures?.features.entries.map((e) => '${e.key}: ${e.value}').join(', ') ?? '',
                               style: DefaultTextStyle.of(context).style,
                             ),
-                            softWrap: true,
-                            overflow: TextOverflow.fade,
                           ),
                         )),
                         DataCell(Checkbox(
@@ -187,15 +198,11 @@ class ProductScreen extends StatelessWidget {
                           children: [
                             IconButton(
                               icon: const Icon(Icons.edit),
-                              onPressed: () {
-                                _showAddEditDialog(context, product);
-                              },
+                              onPressed: () => _showAddEditDialog(context, product),
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete),
-                              onPressed: () {
-                                _productController.deleteProduct(product.id);
-                              },
+                              onPressed: () => _productController.deleteProduct(product.id),
                             ),
                           ],
                         )),
@@ -208,12 +215,6 @@ class ProductScreen extends StatelessWidget {
           ),
         );
       }),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showAddEditDialog(context);
-        },
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }
